@@ -1,5 +1,5 @@
 package out
 
 type PutFileOut struct {
-	Filename string
+	Filename string `json:"filename"`
 }

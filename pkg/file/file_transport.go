@@ -4,32 +4,34 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"github.com/sonyamoonglade/lambda-file-service"
 	dto "github.com/sonyamoonglade/lambda-file-service/pkg/file/dto"
 	"github.com/sonyamoonglade/lambda-file-service/pkg/headers"
+	"github.com/sonyamoonglade/lambda-file-service/pkg/types"
 	"github.com/sonyamoonglade/lambda-file-service/pkg/validation"
+	"log"
 )
 
 type Transport interface {
-	Router(ctx context.Context, input []byte) (*lambda.Response, error)
-	PutFile(ctx context.Context, r lambda.Request) (*lambda.Response, error)
-	PseudoDelete(ctx context.Context, r lambda.Request) (*lambda.Response, error)
-	Delete(ctx context.Context, r lambda.Request) (*lambda.Response, error)
+	Router(ctx context.Context, input []byte) (*types.Response, error)
+	PutFile(ctx context.Context, r types.Request) (*types.Response, error)
+	PseudoDelete(ctx context.Context, r types.Request) (*types.Response, error)
+	Delete(ctx context.Context, r types.Request) (*types.Response, error)
 }
 
 type transport struct {
 	service Service
+	logger  *log.Logger
 }
 
-func NewTransport(service Service) Transport {
-	return &transport{service: service}
+func NewTransport(logger *log.Logger, service Service) Transport {
+	return &transport{service: service, logger: logger}
 }
 
-func (t *transport) PutFile(ctx context.Context, r lambda.Request) (*lambda.Response, error) {
+func (t *transport) PutFile(ctx context.Context, r types.Request) (*types.Response, error) {
 
 	var inp dto.PutFileDto
 
-	h, err := headers.FromRequest(r.Headers)
+	h, err := headers.FromRequest(t.logger, r.Headers)
 	if err != nil {
 		return nil, err
 	}
@@ -44,33 +46,33 @@ func (t *transport) PutFile(ctx context.Context, r lambda.Request) (*lambda.Resp
 		return nil, err
 	}
 
-	return &lambda.Response{
+	return &types.Response{
 		StatusCode: 201,
 		Body:       out,
 	}, nil
 
 }
 
-func (t *transport) PseudoDelete(ctx context.Context, r lambda.Request) (*lambda.Response, error) {
+func (t *transport) PseudoDelete(ctx context.Context, r types.Request) (*types.Response, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (t *transport) Delete(ctx context.Context, r lambda.Request) (*lambda.Response, error) {
+func (t *transport) Delete(ctx context.Context, r types.Request) (*types.Response, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (t *transport) Router(ctx context.Context, input []byte) (*lambda.Response, error) {
+func (t *transport) Router(ctx context.Context, input []byte) (*types.Response, error) {
 
-	var req lambda.Request
+	var req types.Request
 
 	err := json.Unmarshal(input, &req)
 	if err != nil {
 		return nil, err
 	}
 
-	target, ok := req.Query[lambda.RoutingTarget]
+	target, ok := req.Query[types.RoutingTarget]
 	//No specified target provided
 	if !ok {
 		return nil, errors.New("empty target")
@@ -82,9 +84,9 @@ func (t *transport) Router(ctx context.Context, input []byte) (*lambda.Response,
 	}
 
 	switch target {
-	case lambda.PutFile:
+	case types.PutFile:
 		return t.PutFile(ctx, req)
-	case lambda.PseudoDelete:
+	case types.PseudoDelete:
 		return t.PseudoDelete(ctx, req)
 	default: //delete
 		return t.Delete(ctx, req)

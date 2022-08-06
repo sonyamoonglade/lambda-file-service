@@ -40,7 +40,6 @@ func (f *fileService) Put(ctx context.Context, dto dto.PutFileDto) (out.PutFileO
 		Destination: dto.Destination,
 		FileBytes:   &dto.Bytes,
 	})
-
 	if err != nil {
 		return out.PutFileOut{}, err
 	}
@@ -63,8 +62,9 @@ func (f *fileService) GetAll(ctx context.Context) (*s3yandex.Storage, error) {
 func (f *fileService) GenerateName(original string) string {
 	spl := strings.Split(original, ".")
 	l := len(spl)
-	ext := spl[:l-1]
-	name := spl[0]
+	ext := spl[l-1]      //get last el after '.'
+	name := spl[0 : l-1] // the rest from 0 to ext
+	joinedName := strings.Join(name, ".")
 	seed := time.Now().Unix()
-	return fmt.Sprintf("%s_%d.%s", name, seed, ext)
+	return fmt.Sprintf("%s_%d.%s", joinedName, seed, ext)
 }

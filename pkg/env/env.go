@@ -12,15 +12,33 @@ const (
 	Bucket             = "BUCKET"
 )
 
+type Config struct {
+	Owner  string
+	Bucket string
+}
+
 var InvalidEnvironmentVariables = errors.New("some environment variables are missing")
 
-func LoadEnv() error {
-	_, own := os.LookupEnv(Owner)
-	_, secret := os.LookupEnv(AwsSecretAccessKey)
-	_, access := os.LookupEnv(AwsAccessKeyId)
-	_, bucket := os.LookupEnv(Bucket)
-	if !own || !secret || !access || !bucket {
-		return InvalidEnvironmentVariables
+func LoadEnv() (*Config, error) {
+	own, ok := os.LookupEnv(Owner)
+	if !ok {
+		return nil, InvalidEnvironmentVariables
 	}
-	return nil
+	bucket, ok := os.LookupEnv(Bucket)
+	if !ok {
+		return nil, InvalidEnvironmentVariables
+	}
+	_, ok = os.LookupEnv(AwsSecretAccessKey)
+	if !ok {
+		return nil, InvalidEnvironmentVariables
+	}
+	_, ok = os.LookupEnv(AwsAccessKeyId)
+	if !ok {
+		return nil, InvalidEnvironmentVariables
+	}
+
+	return &Config{
+		Owner:  own,
+		Bucket: bucket,
+	}, nil
 }

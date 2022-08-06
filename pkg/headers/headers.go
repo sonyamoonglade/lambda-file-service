@@ -1,6 +1,9 @@
 package headers
 
-import "errors"
+import (
+	"errors"
+	"log"
+)
 
 var XFileNameMissing = errors.New("x-filename header is missing")
 var XDestinationMissing = errors.New("x-destination header is missing")
@@ -12,23 +15,29 @@ type BaseHeaders struct {
 	ContentType string
 }
 
-const XFileName = "x-filename"
-const XDestination = "x-destination"
-const XContentType = "x-content-type"
+//Yandex provides upper-cased headers
+const XFileName = "X-Filename"
+const XDestination = "X-Destination"
+const XContentType = "X-Content-Type"
 
-func FromRequest(h map[string]string) (*BaseHeaders, error) {
+func FromRequest(logger *log.Logger, h map[string]string) (*BaseHeaders, error) {
+
+	logger.Printf("headers: %v\n", h)
 
 	filename, ok := h[XFileName]
+	logger.Printf("filename: %s, ok: %t\n", filename, ok)
 	if !ok {
 		return nil, XFileNameMissing
 	}
 
 	destination, ok := h[XDestination]
+	logger.Printf("destination: %s, ok: %t\n", destination, ok)
 	if !ok {
 		return nil, XDestinationMissing
 	}
 
 	contentType, ok := h[XContentType]
+	logger.Printf("x-contentType: %s, ok: %t\n", contentType, ok)
 	if !ok {
 		return nil, XContentTypeMissing
 	}

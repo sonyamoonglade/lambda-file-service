@@ -1,17 +1,34 @@
-package lambda_file_service
+package lambda
 
 import "context"
 
-type LambdaResponse struct {
+type Response struct {
 	StatusCode int         `json:"statusCode"`
 	Body       interface{} `json:"body"`
 }
 
-func NewLambdaResponse(code int, body interface{}) *LambdaResponse {
-	return &LambdaResponse{
+type Request struct {
+	HttpMethod string            `json:"httpMethod"`
+	Body       []byte            `json:"body"`
+	Query      map[string]string `json:"queryStringParameters"`
+	Headers    map[string]string `json:"headers"`
+	IsBase64   bool              `json:"IsBase64Encoded"`
+}
+
+func NewResponse(code int, body interface{}) *Response {
+	return &Response{
 		StatusCode: code,
 		Body:       body,
 	}
 }
 
-type LambdaHandlerFunc func(ctx context.Context) (*LambdaResponse, error)
+type HandlerFunc func(ctx context.Context, body interface{}) (*Response, error)
+
+const RoutingTarget = "target"
+
+// Routing paths
+var PutFile = "put_file"
+var PseudoDelete = "pseudo_delete"
+var Delete = "delete"
+
+var Targets = []string{PutFile, PseudoDelete, Delete}

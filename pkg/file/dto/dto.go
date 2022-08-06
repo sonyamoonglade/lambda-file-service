@@ -7,8 +7,7 @@ type PutFileDto struct {
 	ContentType string //e.g. image/png
 }
 
-//Pseudo stands for delete files that have same root but leave the latest one alive.
-type PseudoDeleteFileDto struct {
-	Root        string
+type DeleteFileDto struct {
+	Filename    string
 	Destination string
 }

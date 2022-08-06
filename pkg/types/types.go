@@ -8,11 +8,11 @@ type Response struct {
 }
 
 type Request struct {
-	HttpMethod string            `json:"httpMethod"`
-	Body       []byte            `json:"body"`
-	Query      map[string]string `json:"queryStringParameters"`
-	Headers    map[string]string `json:"headers"`
-	IsBase64   bool              `json:"IsBase64Encoded"`
+	HttpMethod string            `json:"httpMethod,omitempty"`
+	Body       []byte            `json:"body,omitempty"`
+	Query      map[string]string `json:"queryStringParameters,omitempty"`
+	Headers    map[string]string `json:"headers,omitempty"`
+	IsBase64   bool              `json:"IsBase64Encoded,omitempty"`
 }
 
 func NewResponse(code int, body interface{}) *Response {

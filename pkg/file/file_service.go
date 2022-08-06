@@ -85,13 +85,14 @@ func (f *fileService) Put(ctx context.Context, dto dto.PutFileDto) (out.PutFileO
 }
 
 func (f *fileService) Delete(ctx context.Context, dto dto.DeleteFileDto) error {
-	//TODO implement me
-	panic("implement me")
+	return f.client.DeleteFile(ctx, &s3yandex.DeleteFileInput{
+		FileName:    dto.Filename,
+		Destination: dto.Destination,
+	})
 }
 
 func (f *fileService) GetAll(ctx context.Context) (*s3yandex.Storage, error) {
-	//TODO implement me
-	panic("implement me")
+	return f.client.GetFiles(ctx)
 }
 
 func (f *fileService) GenerateName(original string) string {

@@ -6,9 +6,11 @@ import (
 	"errors"
 	dto "github.com/sonyamoonglade/lambda-file-service/pkg/file/dto"
 	"github.com/sonyamoonglade/lambda-file-service/pkg/headers"
+	"github.com/sonyamoonglade/lambda-file-service/pkg/lambdaErrors"
 	"github.com/sonyamoonglade/lambda-file-service/pkg/types"
 	"github.com/sonyamoonglade/lambda-file-service/pkg/validation"
 	"log"
+	"net/http"
 )
 
 type Transport interface {
@@ -29,7 +31,6 @@ func NewTransport(logger *log.Logger, service Service) Transport {
 }
 
 func (t *transport) Router(ctx context.Context, input []byte) (*types.Response, error) {
-
 	var req types.Request
 
 	err := json.Unmarshal(input, &req)
@@ -48,13 +49,17 @@ func (t *transport) Router(ctx context.Context, input []byte) (*types.Response, 
 		return nil, err
 	}
 
-	switch target {
-	case types.PutFile:
+	m := req.HttpMethod
+
+	switch {
+	case target == types.PutFile && m == http.MethodPost:
 		return t.PutFile(ctx, req)
-	case types.PseudoDelete:
+	case target == types.PseudoDelete && m == http.MethodPost:
 		return t.PseudoDelete(ctx, req)
-	default: //delete
+	case target == types.Delete && m == http.MethodPost:
 		return t.Delete(ctx, req)
+	default:
+		return nil, lambdaErrors.MethodOrTargetIsNotAllowed
 	}
 }
 
@@ -93,7 +98,6 @@ func (t *transport) PseudoDelete(ctx context.Context, r types.Request) (*types.R
 
 	//Which headers to require from headerProvider
 	hspec := []string{headers.XRoot, headers.XDestination}
-
 	h, err := t.headerProvider.GetSpecific(r.Headers, hspec)
 	if err != nil {
 		return nil, err
@@ -113,6 +117,7 @@ func (t *transport) PseudoDelete(ctx context.Context, r types.Request) (*types.R
 	if err != nil {
 		return nil, err
 	}
+	
 	//Fulfill exact deleted filename after finding the oldest file
 	inp.Filename = latest.Name
 
@@ -129,6 +134,23 @@ func (t *transport) PseudoDelete(ctx context.Context, r types.Request) (*types.R
 }
 
 func (t *transport) Delete(ctx context.Context, r types.Request) (*types.Response, error) {
-	//TODO implement me
-	panic("implement me")
+
+	var inp dto.DeleteFileDto
+
+	hspec := []string{headers.XDestination, headers.XFileName}
+	h, err := t.headerProvider.GetSpecific(r.Headers, hspec)
+	if err != nil {
+		return nil, err
+	}
+
+	inp.Destination = h.Destination
+	inp.Filename = h.Filename
+
+	err = t.service.Delete(ctx, inp)
+	if err != nil {
+		return nil, err
+	}
+
+	return types.NewResponse(200, nil), nil
+
 }

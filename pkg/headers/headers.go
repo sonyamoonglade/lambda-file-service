@@ -41,7 +41,7 @@ const XRoot = "X-Root"
 
 func (p *provider) GetSpecific(h map[string]string, spec []string) (*BaseHeaders, error) {
 
-	var b *BaseHeaders
+	b := &BaseHeaders{}
 
 	for _, s := range spec {
 		v, ok := h[s]

@@ -1,19 +1,20 @@
-package file
+package service
 
 import (
 	"context"
 	"fmt"
-	"github.com/sonyamoonglade/lambda-file-service/pkg/file/dto"
-	"github.com/sonyamoonglade/lambda-file-service/pkg/file/out"
-	"github.com/sonyamoonglade/lambda-file-service/pkg/lambdaErrors"
-	"github.com/sonyamoonglade/lambda-file-service/pkg/types"
-	"github.com/sonyamoonglade/s3-yandex-go/s3yandex"
 	"log"
 	"strings"
 	"time"
+
+	"github.com/sonyamoonglade/lambda-file-service/internal/lambda_errors"
+	"github.com/sonyamoonglade/lambda-file-service/internal/transport/dto"
+	"github.com/sonyamoonglade/lambda-file-service/internal/transport/out"
+	"github.com/sonyamoonglade/lambda-file-service/internal/types"
+	"github.com/sonyamoonglade/s3-yandex-go/s3yandex"
 )
 
-type Service interface {
+type FileService interface {
 	Put(ctx context.Context, dto dto.PutFileDto) (out.PutFileOut, error)
 	FindOldestByRoot(items []*s3yandex.File, root types.Root) (*s3yandex.File, error)
 	GetAll(ctx context.Context) (*s3yandex.Storage, error)
@@ -26,7 +27,7 @@ type fileService struct {
 	client *s3yandex.YandexS3Client
 }
 
-func NewFileService(logger *log.Logger, client *s3yandex.YandexS3Client) Service {
+func NewFileService(logger *log.Logger, client *s3yandex.YandexS3Client) FileService {
 	return &fileService{
 		logger: logger,
 		client: client,
@@ -49,7 +50,7 @@ func (f *fileService) FindOldestByRoot(items []*s3yandex.File, root types.Root) 
 
 	//If only one or zero siblings were found
 	if len(sorted) == 1 || len(sorted) == 0 {
-		return nil, lambdaErrors.UnableToDeleteFile
+		return nil, lambda_errors.UnableToDeleteFile
 	}
 
 	min := sorted[0]

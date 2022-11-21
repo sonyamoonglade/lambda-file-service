@@ -2,8 +2,9 @@ package headers
 
 import (
 	"errors"
-	"github.com/sonyamoonglade/lambda-file-service/pkg/types"
 	"log"
+
+	"github.com/sonyamoonglade/lambda-file-service/internal/types"
 )
 
 var MissingXFileName = errors.New("x-filename header is missing")

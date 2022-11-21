@@ -1,8 +1,9 @@
-package validation
+package transport
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type Testing struct {
@@ -25,7 +26,7 @@ func TestValidation(test *testing.T) {
 	}
 
 	for _, t := range tt {
-		actual := ValidateTarget(t.v)
+		actual := validateTarget(t.v)
 		assert.Equal(test, t.exp, actual)
 	}
 

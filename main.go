@@ -2,15 +2,16 @@ package main
 
 import (
 	"context"
-	"github.com/sonyamoonglade/lambda-file-service/pkg/env"
-	"github.com/sonyamoonglade/lambda-file-service/pkg/file"
-	"github.com/sonyamoonglade/lambda-file-service/pkg/types"
-	"github.com/sonyamoonglade/s3-yandex-go/s3yandex"
 	"log"
 	"os"
+
+	"github.com/sonyamoonglade/lambda-file-service/internal/env"
+	"github.com/sonyamoonglade/lambda-file-service/internal/service"
+	"github.com/sonyamoonglade/lambda-file-service/internal/transport"
+	"github.com/sonyamoonglade/s3-yandex-go/s3yandex"
 )
 
-func LambdaInput(ctx context.Context, input []byte) (*types.Response, error) {
+func LambdaInput(ctx context.Context, input []byte) (*transport.Response, error) {
 
 	log.Println("starting the execution")
 
@@ -31,8 +32,8 @@ func LambdaInput(ctx context.Context, input []byte) (*types.Response, error) {
 	})
 	log.Println("client is ready")
 
-	service := file.NewFileService(logger, client)
-	transport := file.NewTransport(logger, service)
+	fileService := service.NewFileService(logger, client)
+	transport := transport.NewTransport(logger, fileService)
 	log.Println("deps are ready")
 
 	return transport.Router(ctx, input)

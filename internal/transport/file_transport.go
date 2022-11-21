@@ -1,50 +1,50 @@
-package file
+package transport
 
 import (
 	"context"
 	"encoding/json"
 	"errors"
-	dto "github.com/sonyamoonglade/lambda-file-service/pkg/file/dto"
-	"github.com/sonyamoonglade/lambda-file-service/pkg/headers"
-	"github.com/sonyamoonglade/lambda-file-service/pkg/lambdaErrors"
-	"github.com/sonyamoonglade/lambda-file-service/pkg/types"
-	"github.com/sonyamoonglade/lambda-file-service/pkg/validation"
 	"log"
 	"net/http"
+
+	"github.com/sonyamoonglade/lambda-file-service/internal/headers"
+	"github.com/sonyamoonglade/lambda-file-service/internal/lambda_errors"
+	"github.com/sonyamoonglade/lambda-file-service/internal/service"
+	"github.com/sonyamoonglade/lambda-file-service/internal/transport/dto"
 )
 
 type Transport interface {
-	Router(ctx context.Context, input []byte) (*types.Response, error)
-	PutFile(ctx context.Context, r types.Request) (*types.Response, error)
-	PseudoDelete(ctx context.Context, r types.Request) (*types.Response, error)
-	Delete(ctx context.Context, r types.Request) (*types.Response, error)
+	Router(ctx context.Context, input []byte) (*Response, error)
+	PutFile(ctx context.Context, r *Request) (*Response, error)
+	PseudoDelete(ctx context.Context, r *Request) (*Response, error)
+	Delete(ctx context.Context, r *Request) (*Response, error)
 }
 
 type transport struct {
-	service        Service
+	service        service.FileService
 	logger         *log.Logger
 	headerProvider headers.Provider
 }
 
-func NewTransport(logger *log.Logger, service Service) Transport {
+func NewTransport(logger *log.Logger, service service.FileService) Transport {
 	return &transport{service: service, logger: logger, headerProvider: headers.NewHeaderProvider(logger)}
 }
 
-func (t *transport) Router(ctx context.Context, input []byte) (*types.Response, error) {
-	var req types.Request
+func (t *transport) Router(ctx context.Context, input []byte) (*Response, error) {
+	var req *Request
 
 	err := json.Unmarshal(input, &req)
 	if err != nil {
 		return nil, err
 	}
 
-	target, ok := req.Query[types.RoutingTarget]
+	target, ok := req.Query[RoutingTarget]
 	//No specified target provided
 	if !ok {
 		return nil, errors.New("empty target")
 	}
 
-	err = validation.ValidateTarget(target)
+	err = validateTarget(target)
 	if err != nil {
 		return nil, err
 	}
@@ -52,18 +52,18 @@ func (t *transport) Router(ctx context.Context, input []byte) (*types.Response, 
 	m := req.HttpMethod
 
 	switch {
-	case target == types.PutFile && m == http.MethodPost:
+	case target == PutFile && m == http.MethodPost:
 		return t.PutFile(ctx, req)
-	case target == types.PseudoDelete && m == http.MethodPost:
+	case target == PseudoDelete && m == http.MethodPost:
 		return t.PseudoDelete(ctx, req)
-	case target == types.Delete && m == http.MethodPost:
+	case target == Delete && m == http.MethodPost:
 		return t.Delete(ctx, req)
 	default:
-		return nil, lambdaErrors.MethodOrTargetIsNotAllowed
+		return nil, lambda_errors.MethodOrTargetIsNotAllowed
 	}
 }
 
-func (t *transport) PutFile(ctx context.Context, r types.Request) (*types.Response, error) {
+func (t *transport) PutFile(ctx context.Context, r *Request) (*Response, error) {
 
 	var inp dto.PutFileDto
 
@@ -85,14 +85,14 @@ func (t *transport) PutFile(ctx context.Context, r types.Request) (*types.Respon
 		return nil, err
 	}
 
-	return &types.Response{
+	return &Response{
 		StatusCode: 201,
 		Body:       out,
 	}, nil
 
 }
 
-func (t *transport) PseudoDelete(ctx context.Context, r types.Request) (*types.Response, error) {
+func (t *transport) PseudoDelete(ctx context.Context, r *Request) (*Response, error) {
 
 	var inp dto.DeleteFileDto
 
@@ -117,7 +117,7 @@ func (t *transport) PseudoDelete(ctx context.Context, r types.Request) (*types.R
 	if err != nil {
 		return nil, err
 	}
-	
+
 	//Fulfill exact deleted filename after finding the oldest file
 	inp.Filename = latest.Name
 
@@ -126,14 +126,14 @@ func (t *transport) PseudoDelete(ctx context.Context, r types.Request) (*types.R
 		return nil, err
 	}
 
-	return &types.Response{
+	return &Response{
 		StatusCode: 200,
 		Body:       nil,
 	}, nil
 
 }
 
-func (t *transport) Delete(ctx context.Context, r types.Request) (*types.Response, error) {
+func (t *transport) Delete(ctx context.Context, r *Request) (*Response, error) {
 
 	var inp dto.DeleteFileDto
 
@@ -151,6 +151,5 @@ func (t *transport) Delete(ctx context.Context, r types.Request) (*types.Respons
 		return nil, err
 	}
 
-	return types.NewResponse(200, nil), nil
-
+	return NewResponse(http.StatusOK, nil), nil
 }

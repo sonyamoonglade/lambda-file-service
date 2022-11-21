@@ -1,4 +1,4 @@
-package lambdaErrors
+package lambda_errors
 
 import "errors"
 
